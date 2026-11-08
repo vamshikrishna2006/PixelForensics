@@ -6,6 +6,8 @@ import { motion } from 'framer-motion';
 import { ShieldCheck, ScanEye, ArrowRight, Cpu, Waves, Grid3X3 } from 'lucide-react';
 import { PlayCircle, BadgeCheck, FileText, Fingerprint, Microscope, Sparkles, ChevronDown } from 'lucide-react';
 
+const GUEST_MODE = import.meta.env.VITE_GUEST_ACCESS_MODE === 'true';
+
 const HERO_EYE = 'https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?q=80&w=1200&auto=format&fit=crop';
 const HERO_CITY = 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=800&auto=format&fit=crop';
 const SHOWCASE = [
@@ -51,7 +53,7 @@ export default function Landing() {
             Detect AI-generated images. Verify authenticity. Trust what you see - PRNU fingerprints, Fourier and wavelet forensics, ELA maps and explainable verdicts.
           </p>
           <div className="mt-7 flex flex-wrap items-center gap-3">
-            <Link to="/login?mode=signup" className="btn-primary flex items-center gap-2 px-6 py-3">
+            <Link to={GUEST_MODE ? "/dashboard" : "/login?mode=signup"} className="btn-primary flex items-center gap-2 px-6 py-3">
               <ScanEye size={17} /> Get Started <ArrowRight size={16} />
             </Link>
             <a href="#showcase" className="btn-ghost flex items-center gap-2 px-6 py-3">
@@ -152,7 +154,7 @@ export default function Landing() {
             <p className="text-xs font-bold uppercase tracking-[0.3em] text-fuchsia-300">In the wild</p>
             <h2 className="mt-2 text-3xl font-extrabold md:text-5xl">See it catch <span className="bg-gradient-to-r from-fuchsia-400 to-cyan-300 bg-clip-text text-transparent">the unseen</span></h2>
           </div>
-          <Link to="/login?mode=signup" className="btn-ghost text-sm">Try your own image</Link>
+          <Link to={GUEST_MODE ? "/dashboard/new" : "/login?mode=signup"} className="btn-ghost text-sm">Try your own image</Link>
         </Reveal>
         <Stagger className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {SHOWCASE.map((c) => (
@@ -182,7 +184,7 @@ export default function Landing() {
             ))}
           </Stagger>
           <Reveal className="mx-auto mt-10 max-w-3xl text-center">
-            <Link to="/login?mode=signup" className="btn-primary inline-flex items-center gap-2 px-8 py-3.5 text-base">Analyze an Image <ArrowRight size={17} /></Link>
+            <Link to={GUEST_MODE ? "/dashboard/new" : "/login?mode=signup"} className="btn-primary inline-flex items-center gap-2 px-8 py-3.5 text-base">Analyze an Image <ArrowRight size={17} /></Link>
             <p className="mt-3 text-xs text-slate-500">Investigative tool - evidence-based, never absolute proof.</p>
           </Reveal>
         </div>

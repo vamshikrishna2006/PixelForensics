@@ -3,6 +3,7 @@ import type { User } from '../types';
 import { supabase } from './supabase';
 
 const API = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const GUEST_MODE = import.meta.env.VITE_GUEST_ACCESS_MODE === 'true';
 const VERIFY_TIMEOUT_MS = 4000;   // never hang the app if the API is down
 const REVALIDATE_THROTTLE_MS = 15000;
 
@@ -142,9 +143,19 @@ export function describeError(e: unknown, fallback = 'Something went wrong.'): s
 export function AuthProvider({ children }: { children: ReactNode }) {
   // Never trust localStorage for identity: `user` is only populated after the
   // backend confirms the token. `ready` flips once that first check finishes.
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(() => localStorage.getItem('pf_token'));
-  const [ready, setReady] = useState(false);
+  const [user, setUser] = useState<User | null>(() => {
+    if (GUEST_MODE) {
+      let guestId = localStorage.getItem('pf_guest_id');
+      if (!guestId) {
+        guestId = crypto.randomUUID();
+        localStorage.setItem('pf_guest_id', guestId);
+      }
+      return { id: guestId, username: `guest_${guestId.slice(0,6)}`, email: `guest_${guestId.slice(0,6)}@guest.local`, role: 'CUSTOMER' } as User;
+    }
+    return null;
+  });
+  const [token, setToken] = useState<string | null>(() => GUEST_MODE ? 'guest' : localStorage.getItem('pf_token'));
+  const [ready, setReady] = useState(() => GUEST_MODE);
   const [notice, setNotice] = useState<string | null>(null);
   const tokenRef = useRef<string | null>(token);
   const lastCheck = useRef(0);
@@ -304,13 +315,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (sb?.data?.session?.access_token) tok = sb.data.session.access_token;
       } catch { /* keep local token */ }
     }
+    const headers: Record<string, string> = { ...(init.headers || {}) as Record<string, string> };
+    if (tok) headers.Authorization = `Bearer ${tok}`;
+    if (GUEST_MODE) {
+      const guestId = localStorage.getItem('pf_guest_id');
+      if (guestId) headers['X-Guest-Id'] = guestId;
+    }
     const res = await fetch(`${API}${path}`, {
       ...init,
-      headers: { ...(init.headers || {}), ...(tok ? { Authorization: `Bearer ${tok}` } : {}) },
+      headers,
     });
     // A rejected token means the session is gone (expired, server restarted,
     // account disabled). Log out instead of leaving a stale header behind.
-    if (res.status === 401) clearSession('Your session has expired. Please sign in again.');
+    if (res.status === 401 && !GUEST_MODE) clearSession('Your session has expired. Please sign in again.');
     return res;
   };
 

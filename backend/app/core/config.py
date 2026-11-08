@@ -86,6 +86,8 @@ class Settings(BaseSettings):
     DEFAULT_ADMIN_PASSWORD: str = "Admin@12345"
     DEFAULT_ADMIN_USERNAME: str = "admin"
 
+    GUEST_ACCESS_MODE: bool = False
+
     class Config:
         env_file = ".env"
         extra = "ignore"
