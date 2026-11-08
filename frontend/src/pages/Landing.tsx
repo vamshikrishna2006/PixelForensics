@@ -26,6 +26,8 @@ const FEATURES = [
   ['PDF + JSON reports', 'Downloadable evidence packs', 'https://images.unsplash.com/photo-1454391304352-2bf4678b1a7a?q=80&w=600&auto=format&fit=crop'],
 ];
 
+const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true';
+
 export default function Landing() {
   return (
     <div id="home" className="relative min-h-screen overflow-clip bg-[#05060f]">
@@ -51,7 +53,7 @@ export default function Landing() {
             Detect AI-generated images. Verify authenticity. Trust what you see - PRNU fingerprints, Fourier and wavelet forensics, ELA maps and explainable verdicts.
           </p>
           <div className="mt-7 flex flex-wrap items-center gap-3">
-            <Link to="/login?mode=signup" className="btn-primary flex items-center gap-2 px-6 py-3">
+            <Link to={DEMO_MODE ? '/demo' : '/login?mode=signup'} className="btn-primary flex items-center gap-2 px-6 py-3">
               <ScanEye size={17} /> Get Started <ArrowRight size={16} />
             </Link>
             <a href="#showcase" className="btn-ghost flex items-center gap-2 px-6 py-3">
@@ -152,7 +154,7 @@ export default function Landing() {
             <p className="text-xs font-bold uppercase tracking-[0.3em] text-fuchsia-300">In the wild</p>
             <h2 className="mt-2 text-3xl font-extrabold md:text-5xl">See it catch <span className="bg-gradient-to-r from-fuchsia-400 to-cyan-300 bg-clip-text text-transparent">the unseen</span></h2>
           </div>
-          <Link to="/login?mode=signup" className="btn-ghost text-sm">Try your own image</Link>
+          {!DEMO_MODE && <Link to="/login?mode=signup" className="btn-ghost text-sm">Try your own image</Link>}
         </Reveal>
         <Stagger className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {SHOWCASE.map((c) => (
@@ -182,7 +184,7 @@ export default function Landing() {
             ))}
           </Stagger>
           <Reveal className="mx-auto mt-10 max-w-3xl text-center">
-            <Link to="/login?mode=signup" className="btn-primary inline-flex items-center gap-2 px-8 py-3.5 text-base">Analyze an Image <ArrowRight size={17} /></Link>
+            {!DEMO_MODE && <Link to="/login?mode=signup" className="btn-primary inline-flex items-center gap-2 px-8 py-3.5 text-base">Analyze an Image <ArrowRight size={17} /></Link>}
             <p className="mt-3 text-xs text-slate-500">Investigative tool - evidence-based, never absolute proof.</p>
           </Reveal>
         </div>

@@ -7,6 +7,7 @@ import ComparePage from './pages/Compare';
 import AdminPage from './pages/Admin';
 import DashboardLayout from './layouts/DashboardLayout';
 import { DashboardHome, NewAnalysis, History, Profile } from './pages/Dashboard';
+import DemoPage from './pages/Demo';
 import type { JSX } from 'react';
 
 function Guard({ children, admin = false }: { children: JSX.Element; admin?: boolean }) {
@@ -24,6 +25,7 @@ export default function App() {
       <Route path="/" element={<Landing />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Login />} />
+      <Route path="/demo" element={<DemoPage />} />
       <Route path="/dashboard" element={<Guard><DashboardLayout /></Guard>}>
         <Route index element={<DashboardHome />} />
         <Route path="new" element={<NewAnalysis />} />

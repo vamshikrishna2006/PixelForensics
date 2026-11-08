@@ -5,6 +5,7 @@ import { useTheme } from '../services/theme';
 import Logo from './Logo';
 
 export default function Navbar({ publicMode = false }: { publicMode?: boolean }) {
+  const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true';
   const { user, ready, logout } = useAuth();
   const { dark, toggle } = useTheme();
   const nav = useNavigate();
@@ -30,7 +31,7 @@ export default function Navbar({ publicMode = false }: { publicMode?: boolean })
               <span className="hidden text-sm text-slate-300 sm:block">{user.username} · {user.role}</span>
               <button onClick={() => { logout(); nav('/'); }} className="rounded-xl border border-white/10 px-4 py-2 text-sm transition hover:border-white/30">Logout</button>
             </>
-          ) : (
+          ) : DEMO_MODE ? null : (
             <>
               <Link to="/login" className="rounded-xl border border-white/15 px-4 py-2 text-sm font-semibold transition hover:border-white/40 hover:bg-white/5">Sign In</Link>
               <Link to="/login?mode=signup" className="btn-primary text-sm">Sign Up</Link>
