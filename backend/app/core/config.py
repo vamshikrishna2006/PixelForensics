@@ -1,6 +1,7 @@
 """Central configuration — all secrets come from environment."""
 from functools import lru_cache
 from pydantic_settings import BaseSettings
+from pydantic import field_validator
 
 
 class Settings(BaseSettings):
@@ -87,6 +88,13 @@ class Settings(BaseSettings):
     DEFAULT_ADMIN_USERNAME: str = "admin"
 
     GUEST_ACCESS_MODE: bool = False
+
+    @field_validator('SUPABASE_URL', 'SUPABASE_ANON_KEY', 'SUPABASE_SERVICE_ROLE_KEY', mode='before')
+    @classmethod
+    def strip_supabase_strings(cls, v):
+        if isinstance(v, str):
+            return v.strip()
+        return v
 
     class Config:
         env_file = ".env"

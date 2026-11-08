@@ -36,8 +36,15 @@ def store_image(user_id: str, analysis_id: str, raw: bytes, filename: str, relat
     if supabase_needed:
         if not settings.SUPABASE_URL or not settings.SUPABASE_SERVICE_ROLE_KEY:
             raise RuntimeError("Supabase storage is enabled but SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is missing")
+        # Basic sanity checks to avoid opaque 401s
+        url = settings.SUPABASE_URL.strip()
+        key = settings.SUPABASE_SERVICE_ROLE_KEY.strip()
+        if not url.startswith('http'):
+            raise RuntimeError("SUPABASE_URL must start with http/https")
+        if len(key) < 20:
+            raise RuntimeError("SUPABASE_SERVICE_ROLE_KEY appears invalid or empty")
         from supabase import create_client, Client
-        client: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_ROLE_KEY)
+        client: Client = create_client(url, key)
         bucket = settings.SUPABASE_STORAGE_BUCKET
         # Upload to Supabase Storage; do not proceed if upload fails
         try:
@@ -47,6 +54,10 @@ def store_image(user_id: str, analysis_id: str, raw: bytes, filename: str, relat
                 file_options={"content-type": "application/octet-stream", "upsert": False}
             )
         except Exception as e:
+            # Provide clearer context for auth failures
+            msg = str(e)
+            if "Invalid API key" in msg or "401" in msg:
+                raise RuntimeError("Supabase storage upload failed: Invalid API key. Check SUPABASE_SERVICE_ROLE_KEY and SUPABASE_URL environment variables.") from e
             raise RuntimeError(f"Supabase storage upload failed: {e}") from e
         # In hybrid mode also persist locally for fallback/dev
         if mode == "hybrid":
