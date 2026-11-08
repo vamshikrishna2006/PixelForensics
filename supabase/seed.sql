@@ -1,0 +1,3 @@
+-- Seed helper (dev only). Real admin is auto-created by backend on startup.
+-- insert into profiles (username, email, password_hash, role)
+-- values ('admin', 'admin@pixelforensics.com', '<bcrypt-hash>', 'ADMIN');

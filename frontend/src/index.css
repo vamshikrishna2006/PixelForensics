@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { color-scheme: dark; }
+html { scroll-behavior: smooth; }
+body { @apply bg-void text-slate-100 antialiased; font-family: Inter, ui-sans-serif, system-ui, Segoe UI, Roboto, sans-serif; overflow-x: hidden; }
+.light body { @apply bg-slate-50 text-slate-900; }
+
+.glass { @apply bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl; }
+.light .glass { @apply bg-white border-slate-200 shadow-sm; }
+.glass-strong { @apply bg-[#0b0e1d]/90 backdrop-blur-2xl border border-white/10 rounded-2xl; }
+.btn-primary { @apply bg-gradient-to-r from-violet-600 via-purple-500 to-fuchsia-500 hover:from-violet-500 hover:to-fuchsia-400 text-white font-semibold rounded-xl px-5 py-2.5 transition shadow-glow active:scale-[.98]; }
+.btn-ghost { @apply rounded-xl border border-white/15 px-5 py-2.5 font-semibold hover:border-violet-400 hover:bg-white/5 transition active:scale-[.98]; }
+.input { @apply w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 outline-none focus:border-violet-400 placeholder:text-slate-500 transition; }
+.light .input { @apply bg-white border-slate-300 text-slate-900; }
+
+/* animated logo scan */
+.logo-wrap { border-radius: 14px; }
+.scan-eye::after { content:''; position:absolute; inset:2px; border-radius:14px; overflow:hidden;
+  background: linear-gradient(transparent 40%, rgba(34,211,238,.45) 50%, transparent 60%);
+  background-size:100% 280%; animation: logoScan 2.8s linear infinite; pointer-events:none; }
+@keyframes logoScan { 0%{background-position:0 120%} 100%{background-position:0 -120%} }
+
+/* hero grids + orbs */
+.bg-grid { background-image: linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.045) 1px, transparent 1px); background-size: 44px 44px; mask-image: radial-gradient(ellipse 80% 70% at 50% 30%, black 55%, transparent 100%); }
+.orb { position:absolute; border-radius:9999px; filter: blur(90px); opacity:.55; pointer-events:none; }
+.orb-violet { background: radial-gradient(circle, #7c3aed, transparent 65%); }
+.orb-cyan { background: radial-gradient(circle, #06b6d4, transparent 65%); }
+.orb-pink { background: radial-gradient(circle, #ec4899, transparent 65%); }
+
+.scanline { position: relative; overflow: hidden; }
+.scanline::after { content:''; position:absolute; inset:0; background:linear-gradient(transparent 44%, rgba(34,211,238,.22) 50%, transparent 56%); background-size:100% 300%; animation: scan 3.4s linear infinite; pointer-events:none; }
+@keyframes scan { 0%{background-position:0 110%} 100%{background-position:0 -110%} }
+
+/* gradient ring spin for hero eye */
+.ring-spin { animation: spinSlow 18s linear infinite; }
+.ring-spin-rev { animation: spinSlowRev 26s linear infinite; }
+@keyframes spinSlow { to { transform: rotate(360deg); } }
+@keyframes spinSlowRev { to { transform: rotate(-360deg); } }
+
+.float-slow { animation: floatY 6s ease-in-out infinite; }
+@keyframes floatY { 0%,100%{ transform: translateY(0)} 50%{ transform: translateY(-12px)} }
+
+/* marquee strip */
+.marquee { display:flex; gap:2.5rem; width:max-content; animation: marquee 26s linear infinite; }
+@keyframes marquee { to { transform: translateX(-50%); } }
+
+/* shimmer text */
+.shimmer { background: linear-gradient(110deg, #fff 20%, #c4b5fd 35%, #22d3ee 50%, #f0abfc 65%, #fff 80%); background-size:200% auto; -webkit-background-clip:text; background-clip:text; color:transparent; animation: shimmer 5s linear infinite; }
+@keyframes shimmer { to { background-position: 200% center; } }
+
+/* image treatment */
+.img-crazy { filter: saturate(1.25) contrast(1.08); }
+.card-hover { transition: transform .35s cubic-bezier(.22,1,.36,1), border-color .35s, box-shadow .35s; }
+.card-hover:hover { transform: translateY(-6px) scale(1.01); border-color: rgba(139,92,246,.55); box-shadow: 0 18px 60px -18px rgba(139,92,246,.55); }
+
+/* custom scrollbar */
+::-webkit-scrollbar { width:10px; height:10px; }
+::-webkit-scrollbar-track { background:#070b1d; }
+::-webkit-scrollbar-thumb { background: linear-gradient(#7c3aed,#06b6d4); border-radius:99px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .scanline::after, .scan-eye::after, .ring-spin, .ring-spin-rev, .float-slow, .marquee, .shimmer { animation: none !important; }
+  html { scroll-behavior: auto; }
+}
+
