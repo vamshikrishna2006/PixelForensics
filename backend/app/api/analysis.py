@@ -1,4 +1,5 @@
 """Analyze / history / detail / delete / compare / reports (PDF+JSON)."""
+import asyncio
 import json
 import os
 from datetime import datetime
@@ -18,9 +19,11 @@ from app.reports.signing import sign_meta
 from app.schemas.schemas import AnalysisOut, CompareOut, ReportOut
 from app.security.deps import current_user, admin_user
 from app.security.uploads import validate_upload, safe_storage_name, storage_file_path
+from app.core.storage import store_image, get_image_bytes, delete_image
 
 router = APIRouter(tags=["analysis"])
 settings = get_settings()
+analysis_semaphore = asyncio.Semaphore(settings.ANALYSIS_CONCURRENCY)
 
 
 def _out(a):
@@ -49,27 +52,45 @@ async def analyze(file: UploadFile = File(...), db: AsyncSession = Depends(get_d
             size_bytes=len(raw),
         )
         raise HTTPException(400, str(e))
+    # Dimension / decompression bomb protection
     try:
-        result = run_full_analysis(raw, file.filename or "upload.jpg", mime)
-    except Exception as e:
-        log_exception(
-            e,
-            "analysis",
-            "image analysis pipeline failed",
-            module="analysis",
-            size_bytes=len(raw),
-            mime=mime,
-        )
-        raise HTTPException(422, "Image analysis could not be completed. Please try again later.")
+        import cv2
+        import numpy as np
+        arr = np.frombuffer(raw, dtype=np.uint8)
+        img = cv2.imdecode(arr, cv2.IMREAD_COLOR)
+        if img is not None:
+            h, w = img.shape[:2]
+            if max(h, w) > settings.MAX_IMAGE_DIMENSION:
+                raise ValueError(f"Image dimensions too large (max {settings.MAX_IMAGE_DIMENSION}px on a side)")
+            if h * w > settings.MAX_PIXEL_COUNT:
+                raise ValueError(f"Image pixel count too high (max {settings.MAX_PIXEL_COUNT})")
+    except ValueError:
+        raise
+    except Exception:
+        # If dimension check fails, reject to stay safe
+        raise HTTPException(400, "Unable to validate image dimensions")
+    # Run analysis under concurrency limit and off event loop
+    async with analysis_semaphore:
+        try:
+            result = await asyncio.to_thread(run_full_analysis, raw, file.filename or "upload.jpg", mime)
+        except Exception as e:
+            log_exception(
+                e,
+                "analysis",
+                "image analysis pipeline failed",
+                module="analysis",
+                size_bytes=len(raw),
+                mime=mime,
+            )
+            raise HTTPException(422, "Image analysis could not be completed. Please try again later.")
     narrative = build_narrative(result)
     result["narrative"] = narrative
     rel = safe_storage_name(user.id, os.path.splitext(file.filename or ".jpg")[1])
     try:
-        full = storage_file_path(settings.LOCAL_STORAGE_PATH, rel)
-        full.parent.mkdir(parents=True, exist_ok=True)
-        with open(full, "wb") as f:
-            f.write(raw)
-    except (OSError, ValueError) as e:
+        # Store image to configured backend (local / Supabase / hybrid)
+        store_image(user.id, "pending", raw, file.filename or "upload.jpg", relative_path=rel)
+        # keep rel as safe_storage_name for DB reference
+    except Exception as e:
         log_exception(
             e,
             "storage",
@@ -141,8 +162,8 @@ async def remove(aid: str, db: AsyncSession = Depends(get_db), user: Profile = D
     if not a:
         raise HTTPException(404, "Analysis not found.")
     try:
-        os.remove(storage_file_path(settings.LOCAL_STORAGE_PATH, a.storage_path))
-    except (OSError, ValueError) as exc:
+        delete_image(a.storage_path)
+    except Exception as exc:
         log_event(
             "warning",
             "storage",
@@ -213,26 +234,45 @@ async def report_pdf(aid: str, db: AsyncSession = Depends(get_db), user: Profile
         raise HTTPException(404, "Not found.")
     result = a.result.full_json
     name = download_name(report_basename(a.filename, result.get("image_profile"), a.created_at), "pdf")
+    image_path_str = None
+    temp_path = None
     try:
-        image_path = storage_file_path(settings.LOCAL_STORAGE_PATH, a.storage_path)
-    except ValueError:
-        image_path = None
-    try:
-        pdf = build_pdf({
-            "id": a.id, "filename": a.filename, "verdict": a.verdict,
-            "confidence": a.confidence, "final_score": a.final_score,
-            "created_at": a.created_at.isoformat(), "processing_time_s": a.processing_time_s,
-            "owner": user.username,
-            "image_path": str(image_path) if image_path and image_path.exists() else None,
-        }, result)
+        img_bytes = get_image_bytes(a.storage_path)
+        if img_bytes:
+            import tempfile, os
+            tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".jpg")
+            tmp.write(img_bytes)
+            tmp.flush()
+            tmp.close()
+            temp_path = tmp.name
+            image_path_str = temp_path
+        else:
+            image_path = storage_file_path(settings.LOCAL_STORAGE_PATH, a.storage_path)
+            image_path_str = str(image_path) if image_path and image_path.exists() else None
+        async with analysis_semaphore:
+            pdf = await asyncio.to_thread(build_pdf, {
+                "id": a.id, "filename": a.filename, "verdict": a.verdict,
+                "confidence": a.confidence, "final_score": a.final_score,
+                "created_at": a.created_at.isoformat(), "processing_time_s": a.processing_time_s,
+                "owner": user.username,
+                "image_path": image_path_str,
+            }, result)
+        return Response(content=pdf, media_type="application/pdf",
+                        headers={"Content-Disposition": f'attachment; filename="{name}"; '
+                                                        f"filename*=UTF-8''{quote(name)}",
+                                 "Access-Control-Expose-Headers": "Content-Disposition",
+                                 "Cache-Control": "no-store"})
     except Exception as exc:
         log_exception(exc, "report", "PDF report generation failed", module="reports")
         raise HTTPException(500, "Report generation failed. Please try again later.")
-    return Response(content=pdf, media_type="application/pdf",
-                    headers={"Content-Disposition": f'attachment; filename="{name}"; '
-                                                    f"filename*=UTF-8''{quote(name)}",
-                             "Access-Control-Expose-Headers": "Content-Disposition",
-                             "Cache-Control": "no-store"})
+    finally:
+        # Explicit cleanup of temporary image file
+        if temp_path:
+            try:
+                import os
+                os.unlink(temp_path)
+            except Exception:
+                pass
 
 
 @router.get("/api/report/{aid}/signature")

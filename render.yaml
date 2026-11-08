@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: pixelforensics-backend
+    env: docker
+    rootDir: backend
+    branch: main
+    healthCheckPath: /api/health
+    # Do NOT place secrets here. Set environment variables in Render dashboard:
+    # SUPABASE_URL, DATABASE_URL, SECRET_KEY, SUPABASE_SERVICE_ROLE_KEY,
+    # STORAGE_MODE, SUPABASE_STORAGE_ENABLED, SUPABASE_STORAGE_BUCKET,
+    # ANALYSIS_CONCURRENCY, MAX_IMAGE_DIMENSION, MAX_PIXEL_COUNT

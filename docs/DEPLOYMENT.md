@@ -23,7 +23,7 @@ Browser (Vercel frontend)
 
 - Frontend calls the backend API via `VITE_API_BASE_URL`.
 - Backend validates Supabase JWTs (ES256 via JWKS / HS256 legacy) and issues local JWTs.
-- Backend stores uploaded images under `LOCAL_STORAGE_PATH` (local filesystem by default).
+- Backend stores uploaded images under `LOCAL_STORAGE_PATH` (local filesystem by default) or Supabase Storage bucket `images` when `STORAGE_MODE=supabase`.
 
 ---
 
@@ -74,6 +74,11 @@ Browser (Vercel frontend)
    | `MAX_UPLOAD_SIZE_MB` | `10` |
    | `ALLOWED_MIME_TYPES` | `image/jpeg,image/png,image/webp` |
    | `LOCAL_STORAGE_PATH` | Local storage path (default `./storage`) |
+   | `ANALYSIS_CONCURRENCY` | Max concurrent analyses (default `1` for 512 MB Render) |
+   | `MAX_IMAGE_DIMENSION` | Max pixels on a side before reject (default `4096`) |
+   | `MAX_PIXEL_COUNT` | Max total pixels (default `8388608` ≈ 8 MP) |
+   | `STORAGE_MODE` | `local` / `supabase` / `hybrid` (default `local`) |
+   | `SUPABASE_STORAGE_ENABLED` | `true` / `false` (enable Supabase Storage uploads) |
    | `MONITORING_ENABLED` | `true` / `false` |
    | `BACKUP_ENABLED` | `true` / `false` |
    | `DEFAULT_ADMIN_EMAIL` | Admin login email |

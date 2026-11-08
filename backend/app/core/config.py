@@ -33,6 +33,13 @@ class Settings(BaseSettings):
     MAX_UPLOAD_SIZE_MB: int = 10
     ALLOWED_MIME_TYPES: str = "image/jpeg,image/png,image/webp"
     LOCAL_STORAGE_PATH: str = "./storage"
+    # RAM & analysis limits
+    ANALYSIS_CONCURRENCY: int = 1
+    MAX_IMAGE_DIMENSION: int = 4096
+    MAX_PIXEL_COUNT: int = 8388608
+    # Storage backend
+    STORAGE_MODE: str = "local"
+    SUPABASE_STORAGE_ENABLED: bool = False
 
     FORENSIC_ALGORITHM_VERSION: str = "1.0.0"
 

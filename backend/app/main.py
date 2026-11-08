@@ -26,6 +26,10 @@ limiter = Limiter(key_func=get_remote_address, default_limits=[f"{settings.RATE_
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     os.makedirs(os.path.abspath(settings.LOCAL_STORAGE_PATH), exist_ok=True)
+    # Fail fast if Supabase storage is required but not configured
+    if settings.STORAGE_MODE in ("supabase", "hybrid") and settings.SUPABASE_STORAGE_ENABLED:
+        if not settings.SUPABASE_URL or not settings.SUPABASE_SERVICE_ROLE_KEY:
+            raise RuntimeError("STORAGE_MODE requires SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY")
     await init_db()
 
     # Seed the default admin only when no administrator exists.
