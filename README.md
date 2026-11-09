@@ -26,10 +26,7 @@ score.
 
 | Item | Value |
 |---|---|
-| **Website URL** | `https://YOUR-DEPLOYED-PIXELFORENSICS-URL` *(placeholder — replace with the deployed site URL)* |
-| **Admin Login Page** | `https://YOUR-DEPLOYED-PIXELFORENSICS-URL/login` |
-| **Admin Email** | `admin@pixelforensics.com` |
-| **Admin Password** | `********` *(placeholder — replace with your actual admin password)* |
+| **Website URL** | `https://pixel-forensics-tau.vercel.app/` *(placeholder — replace with the deployed site URL)* |
 
 The repository does not contain a deployed website URL, so the URL above is a clearly marked
 placeholder. It must be replaced with the real address once the project is hosted.
